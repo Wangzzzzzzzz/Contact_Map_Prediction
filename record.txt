@@ -1,0 +1,36 @@
+1. weight [1,1]
+recall: 0.213; precision: 0.902; acc: N/A 
+
+2. weight [0.1,2.0]
+recall: 0.923; precision: 0.215; acc: 0.745
+
+3. weight [0.1,1.5]
+recall: 0.679; precision: 0.441; acc: 0.892
+
+
+weight [0.1, 2.0], CM-ce loss
+
+Epoch: 50
+Val. Loss: 0.527 | Val. Perc: 0.147
+Val. Recall: 0.450 | Val. Acc: 0.912
+
+Specific Metrics are the following:
+accu_L/10_short: 0.455, accu_L/10_medium: 0.381, accu_L/10_long: 0.325
+accu_L/5_short: 0.415, accu_L/5_medium: 0.351, accu_L/5_long: 0.309
+accu_L/2_short: 0.342, accu_L/2_medium: 0.298, accu_L/2_long: 0.272
+accu_L/1_short: 0.269, accu_L/1_medium: 0.244, accu_L/1_long: 0.236
+
+
+weight [0.1, 3.0], CM-ce loss
+
+Epoch: 50
+Val. Loss: 0.561 | Val. Perc: 0.107
+Val. Recall: 0.568 | Val. Acc: 0.848
+
+Specific Metrics are the following:
+accu_L/10_short: 0.428, accu_L/10_medium: 0.341, accu_L/10_long: 0.279
+accu_L/5_short: 0.396, accu_L/5_medium: 0.324, accu_L/5_long: 0.271
+accu_L/2_short: 0.334, accu_L/2_medium: 0.282, accu_L/2_long: 0.251
+accu_L/1_short: 0.265, accu_L/1_medium: 0.231, accu_L/1_long: 0.226
+
+
