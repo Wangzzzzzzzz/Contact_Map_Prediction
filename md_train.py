@@ -28,23 +28,22 @@ def split_train_val(path_ds:str, tr_prot:float):
     
     return (x[0:tr_len], y[0:tr_len], x[tr_len:], y[tr_len:])
 
-
 class ContactMap_Set(Dataset):
-    def __init__(self, 
-                 x_list:List[str],
-                 y_list:List[np.ndarray]):
+    def __init__(self,
+                x_list: List[np.ndarray],
+                y_list: List[np.ndarray]):
 
-        super(ContactMap_Set,self).__init__()
+        super(ContactMap_Set, self).__init__()
         self.x = x_list
         self.y = y_list
-    
+
     def __getitem__(self, index):
         return (self.x[index], self.y[index])
     
     def __len__(self):
         return len(self.x)
 
-def collate_fn(sample):
+def collate_fn_str(sample):
     global tokenizer
     assert len(sample) == 1, "Protein Model handles batch size of 1 only"
     seq = []
@@ -58,6 +57,35 @@ def collate_fn(sample):
 
     return (tensor_seq, tensor_ctmap)
 
+def collate_fn_ali(sample):
+    assert len(sample) == 1, "Protein Model handles batch size of 1 only"
+    ali = []
+    ct_mp = []
+    for sequence, contactmap in sample:
+        ali.append(sequence)
+        ct_mp.append(contactmap)
+
+    tensor_ctmap = torch.tensor(ct_mp)
+    tensor_ali = torch.tensor(ali).float()
+
+    return (tensor_ali, tensor_ctmap)
+
+def collate_fn_mix(sample):
+    assert len(sample) == 1, "Protein Model handles batch size of 1 only"
+    seq = []
+    ali = []
+    ct_mp = []
+    for (alignment, sequence), contactmap in sample:
+        seq.append(tokenizer.encode(sequence))
+        ali.append(alignment)
+        ct_mp.append(contactmap)
+
+    tensor_ctmap = torch.tensor(ct_mp)
+    tensor_seq = torch.tensor(seq)
+    tensor_ali = torch.tensor(ali).float()
+
+    return ((tensor_ali, tensor_seq), tensor_ctmap)
+
 def train_an_epoch(epoch_id:int,
                    train_loader: DataLoader,
                    model,
@@ -69,9 +97,20 @@ def train_an_epoch(epoch_id:int,
     with tqdm(train_loader, desc="Run Train", total=total_len) as progress:
         for batch_x, batch_y in progress:
             optimizer.zero_grad()
-            batch_x = batch_x.to(device)
-            batch_y = batch_y.to(device)
-            pred_y = model(batch_x)
+
+            if isinstance(batch_x, tuple):
+                batch_x_ali = batch_x[0]
+                batch_x_seq = batch_x[1]
+                batch_size = batch_x_ali.size(0)
+                batch_x_ali = batch_x_ali.to(device)
+                batch_x_seq = batch_x_seq.to(device)
+                batch_y = batch_y.to(device)
+                pred_y = model(batch_x_ali, batch_x_seq)
+            else:
+                batch_x = batch_x.to(device)
+                batch_y = batch_y.to(device)
+                pred_y = model(batch_x)
+
             loss = loss_fn(pred_y, batch_y)
 
             progress.set_postfix(loss='{:05.3f}'.format(loss.item()))
@@ -164,10 +203,19 @@ def eval_an_epoch(epoch_id:int,
     with torch.no_grad():
         with tqdm(eval_loader, desc="Run Eval", total=total_len) as progress:
             for batch_x, batch_y in progress:
-                batch_size = batch_x.size(0)
-                batch_x = batch_x.to(device)
-                batch_y = batch_y.to(device)
-                y_pred = model(batch_x)
+                if isinstance(batch_x, tuple):
+                    batch_x_ali = batch_x[0]
+                    batch_x_seq = batch_x[1]
+                    batch_size = batch_x_ali.size(0)
+                    batch_x_ali = batch_x_ali.to(device)
+                    batch_x_seq = batch_x_seq.to(device)
+                    batch_y = batch_y.to(device)
+                    y_pred = model(batch_x_ali, batch_x_seq)
+                else:
+                    batch_size = batch_x.size(0)
+                    batch_x = batch_x.to(device)
+                    batch_y = batch_y.to(device)
+                    y_pred = model(batch_x)
                 loss = loss_fn(y_pred, batch_y)
                 (acc, percision, recall), spe_metric = metric_eval(y_pred, batch_y)
 
