@@ -41,7 +41,10 @@ def load_dataset(path_ds: str):
     x = []
     y = []
     for item in dataset:
-        if len(item) == 3:
+        if len(item) == 2:
+            x.append(item[0])
+            y.append(item[-1])
+        elif len(item) == 3:
             x.append((item[0], item[1]))
             y.append(item[-1])
         elif len(item) == 4:

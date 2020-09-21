@@ -251,47 +251,122 @@ class conv_Block2d(nn.Module):
     def __init__(self,
                  kernel_size: List[int],
                  channel: List[int],
-                 activation: str):
+                 activation: str,
+                 strides: int = 1):
         super(conv_Block2d, self).__init__()
+        self.strides = strides
+        self.kernel_size = kernel_size
+
         self.conv = nn.Conv2d(in_channels=channel[0],
                               out_channels=channel[1],
                               kernel_size=kernel_size[0],
-                              padding=int((kernel_size[0]-1)/2))
+                              padding=(kernel_size[0]-1)//2)
         self.conv2 = nn.Conv2d(in_channels=channel[1],
                                out_channels=channel[2],
                                kernel_size=kernel_size[1],
-                               padding=int((kernel_size[1]-1)/2))
-        self.conv3 = nn.Conv2d(in_channels=channel[2],
-                               out_channels=channel[3],
-                               kernel_size=kernel_size[2],
-                               padding=int((kernel_size[2]-1)/2))
+                               padding=(kernel_size[1]-1)//2)
+
+        if strides > 1:
+            self.conv3 = nn.Conv2d(in_channels=channel[2],
+                                   out_channels=channel[3],
+                                   kernel_size=kernel_size[2],
+                                   stride=strides)
+
+            self.sc_conv = nn.Conv2d(in_channels=channel[0],
+                                     out_channels=channel[3],
+                                     kernel_size=kernel_size[2],
+                                     stride=strides)
+        else:
+            self.conv3 = nn.Conv2d(in_channels=channel[2],
+                                   out_channels=channel[3],
+                                   kernel_size=kernel_size[2],
+                                   stride=strides,
+                                   padding=(kernel_size[2]-1)//2)
+
+            self.sc_conv = nn.Conv2d(in_channels=channel[0],
+                                     out_channels=channel[3],
+                                     kernel_size=kernel_size[2],
+                                     stride=strides,
+                                     padding=(kernel_size[2]-1)//2)
 
         self.normalizer1 = nn.BatchNorm2d(channel[1])
         self.normalizer2 = nn.BatchNorm2d(channel[2])
         self.normalizer3 = nn.BatchNorm2d(channel[3])
 
-        self.sc_conv = nn.Conv2d(in_channels=channel[0],
-                                 out_channels=channel[3],
-                                 kernel_size=1)
         self.sc_norm = nn.BatchNorm2d(channel[3])
 
         self.activation = determine_activation(activation)
 
     def forward(self, x):
+        # find the length of x
+        L = x.size(2)
         shortcut = x
-        shortcut = self.sc_conv(shortcut)
-        shortcut = self.sc_norm(shortcut)
+
         x = self.conv(x)
         x = self.normalizer1(x)
         x = self.activation(x)
         x = self.conv2(x)
         x = self.normalizer2(x)
         x = self.activation(x)
+
+        if self.strides > 1 and L % 2 == 1:
+            shortcut = F.pad(shortcut, [0, 1, 0, 1])
+            x = F.pad(x, [0, 1, 0, 1])
+        shortcut = self.sc_conv(shortcut)
+        shortcut = self.sc_norm(shortcut)
+
         x = self.conv3(x)
         x = self.normalizer3(x)
         x = x+shortcut
         y = self.activation(x)
         return y
+
+
+# class conv_Block2d(nn.Module):
+#     def __init__(self,
+#                  kernel_size: List[int],
+#                  channel: List[int],
+#                  activation: str):
+#         super(conv_Block2d, self).__init__()
+#         self.conv = nn.Conv2d(in_channels=channel[0],
+#                               out_channels=channel[1],
+#                               kernel_size=kernel_size[0],
+#                               padding=int((kernel_size[0]-1)/2))
+#         self.conv2 = nn.Conv2d(in_channels=channel[1],
+#                                out_channels=channel[2],
+#                                kernel_size=kernel_size[1],
+#                                padding=int((kernel_size[1]-1)/2))
+#         self.conv3 = nn.Conv2d(in_channels=channel[2],
+#                                out_channels=channel[3],
+#                                kernel_size=kernel_size[2],
+#                                padding=int((kernel_size[2]-1)/2))
+
+#         self.normalizer1 = nn.BatchNorm2d(channel[1])
+#         self.normalizer2 = nn.BatchNorm2d(channel[2])
+#         self.normalizer3 = nn.BatchNorm2d(channel[3])
+
+#         self.sc_conv = nn.Conv2d(in_channels=channel[0],
+#                                  out_channels=channel[3],
+#                                  kernel_size=1)
+#         self.sc_norm = nn.BatchNorm2d(channel[3])
+
+#         self.activation = determine_activation(activation)
+
+#     def forward(self, x):
+#         shortcut = x
+#         shortcut = self.sc_conv(shortcut)
+#         shortcut = self.sc_norm(shortcut)
+#         x = self.conv(x)
+#         x = self.normalizer1(x)
+#         x = self.activation(x)
+#         x = self.conv2(x)
+#         x = self.normalizer2(x)
+#         x = self.activation(x)
+#         x = self.conv3(x)
+#         x = self.normalizer3(x)
+#         x = x+shortcut
+#         y = self.activation(x)
+#         return y
 
 
 # 2d ResNet

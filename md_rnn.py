@@ -6,7 +6,7 @@ import sys
 import h5py
 import numpy as np
 from md_cnn import ResNet1d, ResBlock_config
-from IndRNN_pytorch.IndRNN_onlyrecurrent import IndRNN_onlyrecurrent as IndRNN
+from IndRNN_onlyrecurrent import IndRNN_onlyrecurrent as IndRNN
 
 
 class LSTM_layer(nn.Module):
