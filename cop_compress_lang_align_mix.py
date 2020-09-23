@@ -411,11 +411,11 @@ def train_compression_model():
     loss_fn = loss_fn.to(device)
 
     for epoch in range(N_epoch):
-        train_an_epoch(epoch,
-                       train_loader,
-                       model,
-                       optimizer,
-                       loss_fn)
+        # train_an_epoch(epoch,
+        #                train_loader,
+        #                model,
+        #                optimizer,
+        #                loss_fn)
         l_test, p_test, r_test, a_test, m_test = eval_an_epoch(epoch,
                                                                eval_loader,
                                                                model,
@@ -436,7 +436,7 @@ def train_compression_model():
             m_test[9], m_test[10], m_test[11]))
 
     torch.save(model.state_dict(),
-               './compression_base.pth.tar')
+               './cop_mix_compression_base.pth.tar')
 
 
 def main():

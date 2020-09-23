@@ -197,12 +197,12 @@ def metric_eval(pred_res, actu_res):
         seq_idx = torch.arange(actu_res.size(1), device=actu_res.device)
         x_id, y_id = torch.meshgrid(seq_idx, seq_idx)
 
-        valid_region = (abs(y_id-x_id) >= 6).unsqueeze(0)
+        valid_region = (abs(y_id-x_id) >= 6).long().unsqueeze(0)
         short_region = ((abs(y_id-x_id) >= 6) &
-                        (abs(y_id-x_id) < 12)).unsqueeze(0)
+                        (abs(y_id-x_id) < 12)).long().unsqueeze(0)
         medium_region = ((abs(y_id-x_id) >= 12) &
-                         (abs(y_id-x_id) < 24)).unsqueeze(0)
-        long_region = ((abs(y_id-x_id) >= 24)).unsqueeze(0)
+                         (abs(y_id-x_id) < 24)).long().unsqueeze(0)
+        long_region = ((abs(y_id-x_id) >= 24)).long().unsqueeze(0)
         regions = [short_region, medium_region, long_region]
         cutoffs = [10, 5, 2, 1]
 
